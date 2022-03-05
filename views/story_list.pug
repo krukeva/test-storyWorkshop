@@ -1,0 +1,12 @@
+extends layouts/main-layout
+
+include includes/mixins.pug
+
+block content
+  h1.my-3.py-3= title
+
+  .list-group.my-3.py-3
+    each story in story_list
+      +storyAsItem(story)
+    else
+      li La base d'histoires est vide.

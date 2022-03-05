@@ -1,0 +1,47 @@
+extends layouts/message-layout.pug
+
+include includes/mixins.pug
+
+mixin sequenceAsItem(sequence,index)
+  h3
+    a(href='/event/'+sequence._id) #{sequence.name}
+  p (du #{formateDateTime(sequence.startDateTime)} au #{formateDateTime(sequence.endDateTime)})
+
+  .div.mb-3
+    a.btn.btn-outline-secondary.w-50(href='/story/'+story._id+'/sequencing/augment?sequenceID='+sequence._id) Scinder en ajoutant un point de bascule
+    if index < sequences.length-1
+      a.btn.btn-outline-secondary.w-50(href='/story/'+story._id+'/sequencing/reduce?sequenceID='+sequence._id) Fusionner avec la séquence suivante
+  div.ml-5
+    h4 Résumé&nbsp;:
+    p.ml-5 !{sequence.description}
+
+    if sequence.events && sequence.events.length
+      h4 Evénements avant le point de bascule&nbsp;:
+      div.ml-5
+        each event in sequence.events
+          +eventAsShortItem(event)
+      
+    
+    if sequence.keyEvent
+      h4
+        a(href='/event/'+sequence.keyEvent._id) Point de bascule
+        |  (du #{formateDateTime(sequence.keyEvent.startDateTime)} au #{formateDateTime(sequence.keyEvent.endDateTime)} )
+      div.ml-5
+        p= sequence.keyEvent.description
+    else
+        p.h4 Pas de point de bascule
+
+
+block message
+  .div.mt-4
+    a.btn.btn-outline-secondary.btn-lg.w-50(href='/story/'+story._id+'/sequencing/delete?deleteEvents=1') Supprimer toutes les séquences et leurs événements
+    a.btn.btn-outline-secondary.btn-lg.w-50(href='/story/'+story._id+'/sequencing/delete') Garder les événements mais supprimer les séquences
+  a.btn.btn-outline-secondary.btn-lg.btn-light.w-100(href='/story/'+story._id+'/sequencing/update') Modifier les points de bascule ou les résumés des séquences
+
+  .alert
+     div.itemToHighlight
+       +storyAsShortItem(story)
+
+  
+  each sequence, index in sequences
+    +sequenceAsItem(sequence, index)

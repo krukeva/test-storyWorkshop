@@ -1,0 +1,20 @@
+extends main-layout
+
+include ../includes/mixins.pug
+
+block content
+  h2.mb-5= title
+
+  if errors
+    h4(style='color: red') Erreur(s)&nbsp;:
+    ul
+      for error in errors
+        li= error.msg
+  
+  block alert
+
+  form(method= "POST")
+    block form
+
+  div.message
+    block message

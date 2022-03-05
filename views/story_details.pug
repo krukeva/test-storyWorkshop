@@ -1,0 +1,39 @@
+extends layouts/card-layout.pug
+
+include includes/mixins.pug
+
+block card-body
+  -let cardTitle= story.title
+  -let path= '/story/'+story._id
+  -let subtitle= 'Une histoire dans le ' + story.world 
+
+  +cardHeader(cardTitle, path, subtitle)
+  
+  if story.startDate
+    h2.card-title Résumé
+    div.ml-5
+      p.card-text #[em (L'histoire se déroule du #{story.startDate} au #{story.endDate}.)]
+      p.card-text #{story.description}
+      
+    h2.card-title Séquences
+    div.ml-5
+      if story.sequences && story.sequences.length
+        each sequence in story.sequences
+          +eventAsShortItem(sequence)
+        a.btn.btn-secondary.btn-sm.mx-5.mb-3.w-50(href='/story/'+story._id+'/sequencing') Modifier les séquences
+      else
+        p.h4 Découper en séquences
+        -let n=1
+        .list-group.list-group-horizontal.ml-5
+          while n<5
+            a.list-group-item.btn.btn-secondary(href='/story/'+story._id+'/sequencing/create?nb='+n) #{n}
+            -n++
+      
+    h2.card-title Evénements hors séquences
+    div.ml-5
+      if story.independantEvents
+        each event in story.independantEvents
+          +eventAsShortItem(event)
+
+      a.btn.btn-secondary.btn-sm.mx-5.mb-3.w-50(href='/event/'+story.coveringEventID+'/subevent/create') Ajouter un événement
+      a.btn.btn-secondary.btn-sm.mx-5.mb-3.w-50(href='/event/'+story.coveringEventID+'/tree/create') Ajouter une arboresence aléatoire d'événements

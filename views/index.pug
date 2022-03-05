@@ -1,0 +1,10 @@
+extends layouts/message-layout.pug
+
+block message
+  .message
+    p.h3 Bienvenue dans l'atelier des histoires&nbsp;!
+
+    .list-group.w-50.my-5.mx-auto
+      a(href='/story/create' class="list-group-item list-group-item-action list-group-item-primary my-3") Créer une nouvelle histoire
+      a(href='/stories' class="list-group-item list-group-item-action list-group-item-primary my-3") Voir toutes les histoires
+    

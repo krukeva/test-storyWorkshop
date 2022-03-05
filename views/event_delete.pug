@@ -1,0 +1,36 @@
+extends layouts/message-layout.pug
+
+include includes/mixins.pug
+
+block message
+  if event.isKey
+    div.message
+      p.h3 Cet événement est un point de bascule.
+        |  Pour le supprimer, il faut modifier le séquencement.
+
+  else
+    div.message
+
+      if alert
+        p.h3(style='color: red') Cet événement est à la racine d'une histoire.
+          |  Voulez-vous vraiment le supprimer et supprimer l'histoire&nbsp;?
+    
+      else
+        h3 Voulez-vous vraiment supprimer cet événement ?
+
+      div.itemToDelete
+        h4= event.name
+        p= event.description
+
+
+      if subevents.length
+        p.h3 #[strong Les sous-événements suivants seront supprimés&nbsp;:]
+
+        div.list-group.itemToDelete
+          each subevent in subevents
+            +eventAsShortItem(subevent)
+
+      form.deleteButton( method='POST' action='')
+        div.form-group
+          input#eventID.form-control(type='hidden', name='eventID', required='true', value=event._id )
+        button.btn.btn-primary.btn-lg(type='submit') Supprimer

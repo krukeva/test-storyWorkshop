@@ -1,0 +1,30 @@
+extends layouts/message-layout.pug
+
+
+block message
+  div.message
+ 
+    if alert
+      p.h3(style='color: red') Une ou plusieurs histoires se déroulent dans le monde suivant&nbsp;:
+      div.itemToDelete
+        h4= world.name
+        p= world.description
+
+      p.h3 Avant de pouvoir supprimer ce monde, il faut supprimer les histoires ci-dessous:
+
+      div.list-group.itemToDelete
+        each story in stories
+          +storyAsShortItem(story)
+          a.btn.btn-secondary.mb-5(href='/story/'+story._id+'/delete') Supprimer
+          
+    else
+      h3 Voulez-vous vraiment supprimer le monde suivant&nbsp?
+
+      div.itemToDelete
+        h4= world.name
+        p= world.description
+
+      form.deleteButton( method='POST' action='')
+        div.form-group
+          input#worldID.form-control(type='hidden', name='worldID', required='true', value=world._id )
+        button.btn.btn-primary.btn-lg(type='submit') Supprimer

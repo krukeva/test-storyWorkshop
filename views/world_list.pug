@@ -1,0 +1,14 @@
+extends layouts/main-layout
+
+include includes/mixins.pug
+
+block content
+  h1.my-3.py-3= title
+
+  if world_list.length
+    each world in world_list
+      -story_list = story_list_index[world._id]
+      +worldAsItem(world, story_list)
+      
+  else
+    h3 Il n'y a pas encore de monde dans cette base.

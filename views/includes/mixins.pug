@@ -1,0 +1,92 @@
+mixin eventAsShortItem(myEvent)
+  .list-item.left.mb-1
+    p
+      a(href='/event/'+myEvent._id) #{ myEvent.name }
+      |  #[em (du #{formateDateTime(myEvent.startDateTime)} au #{formateDateTime(myEvent.endDateTime)})] <br />
+      | #{myEvent.description}
+
+mixin eventAsItem(myEvent)
+  .list-group-item.mb-3
+    a(href='/event/'+myEvent._id) #{myEvent.name}
+    p du #{myEvent.startDateTime} au #{myEvent.endDateTime}
+    p.ml-3 #{myEvent.description}
+    if myEvent.children
+      div.ml-3
+        ul
+          each child in myEvent.children
+            +eventAsItem(child)
+
+
+mixin storyAsShortItem(myStory)
+  .list-item.left
+    p.h4
+      a(href=myStory.url) #{ myStory.title }
+    if !myStory.coveringEvent
+      p.ml-3 #[em Résumé non disponible.]
+    else
+      p.ml-3 #[em #{ myStory.coveringEvent.description }]
+            
+
+
+mixin storyAsItem(myStory)
+  .list-group-item.my-3.border
+    .item-header
+      div
+        h3 
+          a(href=myStory.url) #{myStory.title}
+        if myStory.coveringEvent
+          p.ml-3 #[em du #{myStory.coveringEvent.startDate_formated} au #{myStory.coveringEvent.endDate_formated}]
+      .btn-group
+        a.btn.btn-secondary(href='/story/'+myStory._id+'/delete/') Supprimer
+        a.btn.btn-primary(href='/story/'+myStory._id+'/update/') Modifier
+        a.btn.btn.btn-outline-primary(href=myStory.url) Voir
+    hr
+    .item-content
+      h5 Résumé&nbsp;:
+      if myStory.coveringEvent
+        p= myStory.coveringEvent.description
+      else
+        p #[em Il n'y a pas de résumé car l'événement couvrant n'est pas défini.]
+
+
+mixin worldAsItem(myWorld, myStory_list)
+  .list-group-item.my-3.border.rounded
+    .item-header
+      div
+        h3 
+          a(href=myWorld.url) #{myWorld.name}
+        
+      .btn-group
+        a.btn.btn-secondary(href='/world/'+myWorld._id+'/delete') Supprimer
+        a.btn.btn-primary(href='/world/'+myWorld._id+'/update') Modifier
+        a.btn.btn.btn-outline-primary(href=myWorld.url) Voir
+    hr
+    .item-content
+      if myStory_list.length
+        h5 #[b Histoires dans ce monde&nbsp;:]
+        div.ml-3
+              each story in myStory_list
+                dt
+                  a(href=story.url) #{ story.title }
+                if !story.coveringEvent
+                  dd Résumé non disponible.
+                else
+                  dd #[em #{ story.coveringEvent.description }]
+      else
+        p #[em Il n'y a pas encore d'histoire dans ce monde.]
+
+
+
+
+
+mixin cardHeader(myTitle, myPath, mySubtitle=null)
+  .item-header
+    div
+      h2.card-title !{myTitle}
+      if mySubtitle
+        p.ml-3= mySubtitle
+    .btn-group
+      a.btn.btn-secondary(href=myPath+'/delete/') Supprimer
+      a.btn.btn-primary(href=myPath+'/update/') Modifier
+    
+  hr

@@ -1,0 +1,16 @@
+extends layouts/message-layout.pug
+
+block message
+  div.message
+ 
+      h3 Voulez-vous vraiment supprimer l'histoire suivante&nbsp?
+
+      div.itemToDelete
+        h4= story.title
+        if story.coveringEvent && story.coveringEvent.description
+          p= story.coveringEvent.description
+
+      form.deleteButton( method='POST' action='')
+        div.form-group
+          input#worldID.form-control(type='hidden', name='storyID', required='true', value=story._id )
+        button.btn.btn-primary.btn-lg(type='submit') Supprimer

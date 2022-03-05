@@ -1,0 +1,51 @@
+extends layouts/form-layout
+
+
+block form
+      input(type="hidden", name = "dateTimeMinSup", value = (undefined===dateTimeMinSup ? '' : dateTimeMinSup))
+      input(type="hidden", name = "dateTimeMaxInf", value = (undefined===dateTimeMaxInf ? '' : dateTimeMaxInf))
+
+      
+      div.form-group
+            label(for = "name") Nom :
+            input#name.form-control(type='text', name = "name", value = (undefined===event ? '' : event.name))
+      
+      div.form-group
+            label(for = "description") Description :
+            input#name.form-control(type='text', name = "description", value = (undefined===event ? '' : event.description))
+      
+      div.form-group
+            label(for = "startDate") Date de début :
+            input(type="date", name = "startDate", value = (undefined===event ? '' : event.startDate))
+            input(type="time", name = "startTime", value = (undefined===event ? '' : event.startTime))
+      
+      if event && event.isKey
+          div.form-group
+            label(for = "endDate") Date de fin :
+            input(type="date", value = event.endDate, disabled)
+            input(type="time", value = event.endTime, disabled)
+            input(type="hidden", name = "endDate", value = event.endDate)
+            input(type="hidden", name = "endTime", value = event.endTime)
+      else
+          div.form-group
+            label(for = "endDate") Date de fin :
+            input(type="date",  name = "endDate", value = (undefined===event ? '' : event.endDate))
+            input(type="time", name = "endTime", value = (undefined===event ? '' : event.endTime))
+
+      button.btn.btn-primary(type='submit') Enregistrer
+
+
+block message
+  if alert
+    div.ml-3.border
+      if story && story.length
+        h4 Cet événement est à la racine d'une histoire
+      if subevents && subevents.length
+        h4 Cet événement contient les sous-événements suivants:
+          dl
+            each subevent in subevents
+              dt
+                a(href=subevent.url) !{subevent.name}
+                | 
+                | du !{subevent.startDateTime_formated} au !{subevent.endDateTime_formated}
+                dd !{subevent.description}

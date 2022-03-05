@@ -1,0 +1,38 @@
+extends layouts/message-layout.pug
+
+block message
+
+  p Ce site fournit une API utilisée par l'#[em Atelier des histoires].
+    |  Il permet aussi d'interagir directement avec les données.
+
+  p Une histoire se déroule dans un monde et est décrite par des événements.
+    |  Les événements impliquent des personnes et se déroulent dans des lieux.
+    |  Nous décrivons les événements sous forme hiérarchique qui permet de modéliser des niveaux d'abstraction,
+    |  du détail d'une action instantanée au résumé d'un épisode, et même de toute l'histoire
+    |  qui peut être un épisode d'une histoire plus ample.
+  
+  p Cette version 1.0 de l'#[em Atelier des histoires] permet uniquement de gérer la temporalité des événements.
+    |  Les personnages et la géographie ne sont pas encore pris en charge.
+    |  Il est possible de choisir le monde dans lequel se déroule l'histoire comme un simple label.
+    |  A terme, il sera possible d'importer les caractéristiques d'un monde
+    |  qui aura été paramétré dans un #[em Atelier des mondes] qui n'existe pas encore.
+    |  En prévision, il est possible d'ajouter de nouveaux mondes dont la description permet de situer les histoires.
+    
+  h3 Accès aux données
+
+  ul(class='w-50')
+      li
+        a(href='/stories') Toutes les histoires
+      li
+        a(href='/events') Tous les événements
+      li
+        a(href='/worlds') Tous les mondes
+
+      hr
+
+      li
+        a(href='/story/create') Créer une nouvelle histoire
+      li
+        a(href='/event/create') Créer un nouvel événement
+      li
+        a(href='/world/create') Créer un nouveau monde 

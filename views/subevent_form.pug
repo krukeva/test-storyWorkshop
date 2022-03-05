@@ -1,0 +1,32 @@
+extends layouts/form-layout
+
+block alert
+  .alert
+     div.itemToHighlight
+       h4 Evénement parent&nbsp;:
+       +eventAsShortItem(parentEvent)
+
+block form
+      input( type='hidden', name='parentEventID', value=parentEvent._id)
+      input( type='hidden', name='parentEvent_startDateTime', value=parentEvent.startDateTime)
+      input( type='hidden', name='parentEvent_endDateTime', value=parentEvent.endDateTime)
+
+      div.form-group
+            label(for = "name") Nom :
+            input#name.form-control(type='text', name = "name", value = (undefined===subevent ? '' : subevent.name))
+      
+      div.form-group
+            label(for = "description") Description :
+            input#description.form-control(type='text', name = "description", value = (undefined===subevent ? '' : subevent.description))
+      
+      div.form-group
+            label(for = "startDate") Date de début :
+            input(type="date", name = "startDate", value = (undefined===subevent ? parentEvent.startDate : subevent.startDate))
+            input(type="time", name = "startTime", value = (undefined===subevent ? parentEvent.startTime : subevent.startTime))
+      
+      div.form-group
+            label(for = "endDate") Date de fin :
+            input(type="date",  name = "endDate", value = (undefined===subevent ? parentEvent.endDate : subevent.endDate))
+            input(type="time", name = "endTime", value = (undefined===subevent ? parentEvent.endTime : subevent.endTime))
+
+      button.btn.btn-primary(type='submit') Enregistrer 

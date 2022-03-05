@@ -1,0 +1,43 @@
+extends layouts/form-layout.pug
+
+include includes/mixins.pug
+
+block alert
+  div.message
+
+    h3 Séquence à couper&nbsp;:
+    
+    div.itemToDelete
+        +eventAsShortItem(sequenceToSplit)
+
+
+block form
+  if candidateKeyEvents
+        p.h4 Les points de bascule possibles sont&nbsp;:
+          each event in candidateKeyEvents
+            -let testResult= keyEventCandidate && keyEventCandidate===event._id.toString()
+            table
+              tr
+                td &nbsp;&nbsp;
+                 input(type='radio', name="keyEventCandidate", value=event._id, checked=testResult)
+                 | &nbsp;&nbsp;
+                td
+                  +eventAsShortItem(event)
+
+        div.form-group
+            -let textPlaceholder="Au début de la séquence...\nPendant la séquence...\nLa situation bascule parce que..."
+            p.h4
+              label(for = "outline1") Résumé de la première moitié&nbsp;:
+            textarea#description.form-control(name = "outline1", placeholder=textPlaceholder) #{undefined===sequenceOutlines ? null : sequenceOutlines[0]}
+
+        div.form-group
+            p.h4
+              label(for = "outline2") Résumé de la deuxième moitié&nbsp;:
+            textarea#description.form-control(name = "outline2", placeholder=textPlaceholder) #{undefined===sequenceOutlines ? null : sequenceOutlines[1]}
+
+
+        div.form-group
+        button.btn.btn-primary.btn-lg(type='submit') Scinder
+  else
+      p.
+        Aucun événement de la séquence ne peut servir de point de bascule.

@@ -1,0 +1,23 @@
+extends layouts/form-layout
+
+block message
+
+  if stories && stories.length
+    p.h3.mb-3 Ce monde contient les histoires suivantes&nbsp;:
+    each story in stories
+      +storyAsShortItem(story)
+  else
+    p.h3 Ce monde ne contient aucune histoire.
+
+block form
+  
+    div.form-group
+      label(for = "name") Nom :
+      input#name.form-control(type='text', name = "name", value = (undefined===world ? '' : world.name))
+
+    div.form-group
+      label(for = "description") Description :
+      textarea#description.form-control(name = "description", rows='3') !{ undefined===world ? '' : world.description }
+
+
+    button.btn.btn-primary(type='submit') Enregistrer

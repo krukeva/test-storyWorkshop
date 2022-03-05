@@ -1,0 +1,67 @@
+extends layouts/form-layout
+
+
+mixin sequenceFormPart(i)
+  h3 Séquence #{i}
+  div.ml-5.mb-5
+      -const test_sequence = !(undefined===sequences || undefined === sequences[i-1])
+      -const test_keyEvent = test_sequence && !(undefined === sequences[i-1].keyEvent)
+      -const test_events   = test_sequence && !(undefined === sequences[i-1].events) && (sequences[i-1].events.length>0)
+      
+      if test_sequence
+        p #[em (du #{formateDateTime(sequences[i-1].startDateTime)} au #{formateDateTime(sequences[i-1].endDateTime)}]
+      div.form-group
+            p.h4
+              label(for = "description") Résumé&nbsp;:
+            textarea#description.form-control(name = "outline"+i) !{test_sequence ? sequences[i-1].description : ''}
+
+      if test_events
+        h4 Evénement(s) avant le point de bascule
+        div.form-group.ml-5.mt-0
+          each event in sequences[i-1].events
+            +eventAsShortItem(event)
+      
+      if test_keyEvent || !test_sequence
+        h4 Point de bascule
+        div.form-group.ml-5.mt-0
+            label(for = "description") Description&nbsp;:
+            input#description.form-control(type='text', name = "description"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.description : ''))
+        div.date-group
+          div.form-group
+            label(for = "startDate") Date de début&nbsp;:&nbsp;&nbsp;
+            input(type="date", name = "startDate"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.startDate : parentEvent.startDate))
+            input(type="time", name = "startTime"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.startTime : parentEvent.startTime))
+    
+          div.form-group.mb-0
+            label(for = "endDate") Date de fin&nbsp;:&nbsp;&nbsp;
+            if i!=max
+                input(type="date", name = "endDate"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.endDate : parentEvent.endDate))
+                input(type="time", name = "endTime"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.endTime : parentEvent.endTime))
+            else
+                input(type="date", value=parentEvent.endDate, disabled)
+                input(type="hidden", name ="endDate"+i, value=parentEvent.endDate)
+                input(type="time", value = parentEvent.endTime, disabled)
+                input(type="hidden", name ="endTime"+i, value=parentEvent.endTime)
+
+            
+
+block alert
+  .alert
+     div.itemToHighlight
+       h4 Histoire&nbsp;:
+       +storyAsShortItem(story)
+
+block form
+  input( type='hidden', name='parentEventID', value=parentEvent._id)
+  input( type='hidden', name='parentEvent_startDateTime', value=parentEvent.startDateTime)
+  input( type='hidden', name='parentEvent_endDateTime', value=parentEvent.endDateTime)
+  if sequences
+    input( type='hidden', name='nb_sequences', value=nb_sequences )
+
+  -let max=parseInt(nb_sequences)
+  -let n=1
+  while n<=max
+   +sequenceFormPart(n.toString())
+   -n++
+
+  button.btn.btn-primary(type='submit') Enregistrer 

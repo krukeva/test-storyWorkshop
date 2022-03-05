@@ -1,0 +1,99 @@
+header {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+header .logo {
+    padding: 1em 0em 0 1em;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+header .logo img{
+    margin-right: 1em;
+}
+
+header ul {
+    display: flex;
+    flex-direction: row;
+    padding-right: 2em;
+    margin-bottom: 0;
+}
+
+header ul li {
+    margin-right: 1em;
+}
+
+hr.header {
+    border-top-color: rgb(150, 150, 150);
+    border-top-width: 1px;
+}
+
+.sidebar-nav {
+    margin-top: 20px;
+    padding: 0;
+    list-style: none;
+}
+
+li {
+    list-style: none;
+}
+
+.item-header {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.item-header .btn-group {
+    display: flex;
+}
+
+.item-header .btn-group .btn {
+    flex: 1 1 0px;
+    min-width: 100px;
+}
+
+.card-header {
+    text-align: right;
+    color:rgb(150, 150, 150);
+    font-style: italic;
+}
+
+.message {
+    width: 75%;
+    margin: 3em auto;
+    text-align: center;
+}
+
+.message .itemToDelete, .alert .itemToHighlight {
+    margin: 2em auto;
+    padding: 1em;
+    text-align: left;
+    border: solid;
+    border-color: rgb(150, 150, 150);
+    border-radius: 1em;
+}
+
+.message .itemToDelete p {
+    margin-left: 1em;
+}
+
+.left{
+    text-align: left;
+}
+
+form .date-group {
+    margin: 2em 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}

@@ -1,0 +1,14 @@
+extends layouts/form-layout
+
+block alert
+  .alert
+     div.itemToHighlight
+       h4 Evénement parent&nbsp;:
+       +eventAsShortItem(parentEvent)
+
+block form
+      input( type='hidden', name='parentEventID', value=parentEvent._id)
+      input( type='hidden', name='parentEvent_startDateTime', value=parentEvent.startDateTime)
+      input( type='hidden', name='parentEvent_endDateTime', value=parentEvent.endDateTime)
+
+      button.btn.btn-primary(type='submit') Lancer

@@ -1,0 +1,22 @@
+extends layouts/card-layout.pug
+
+include includes/mixins.pug
+
+
+block card-body
+  -let cardTitle= world.name
+  -let path= '/world/'+world.id
+
+  +cardHeader(cardTitle, path)
+
+  h4 Description&nbsp;:
+  p.card-text !{world.description}
+
+  if stories.length
+        hr
+        p.h4 Ce monde contient les histoires suivantes&nbsp;:
+        each story in stories
+          +storyAsShortItem(story)
+  else
+        p.h4 Ce monde ne contient aucune histoire.
+        

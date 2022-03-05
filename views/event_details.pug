@@ -1,0 +1,35 @@
+extends layouts/card-layout.pug
+
+include includes/mixins.pug
+
+
+block message
+  if parentEvent
+    .message
+      if story
+        p.h4 Histoire&nbsp;:&nbsp;
+          a(href=story.url) !{story.title}
+      p.h4 Evénément parent
+      +eventAsShortItem(parentEvent)
+        
+  else if story
+    .message
+      +storyAsShortItem(story)
+
+block card-body
+  -let cardTitle= event.name
+  -let path= '/event/'+event._id
+  -let subtitle= 'du ' + formateDateTime(event.startDateTime) + ' au ' + formateDateTime(event.endDateTime)
+
+  +cardHeader(cardTitle, path, subtitle)
+
+  h2 Description
+  p #{event.description}
+
+  if event.children
+        h2 Sous-événements
+        ul
+          each child in event.children
+            +eventAsItem(child)
+
+  a.btn.btn-secondary.m-3.w-50(href='/event/'+event._id+'/subevent/create') Ajouter un sous-événement

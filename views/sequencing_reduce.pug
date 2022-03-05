@@ -1,0 +1,23 @@
+extends layouts/form-layout.pug
+
+include includes/mixins.pug
+
+block alert
+  div.message
+
+    h3 Voulez-vous vraiment fusionner les deux séquences suivante&nbsp?
+    
+    div.itemToDelete
+        +eventAsShortItem(sequenceToKeep)
+        +eventAsShortItem(sequenceToMerge)
+
+
+block form
+  div.form-group
+    -let textPlaceholder="Au début de la séquence...\nPendant la séquence...\nLa situation bascule parce que..."
+    p.h4
+      label(for = "outline1") Résumé de la séquence fusionnée&nbsp;:
+    textarea#description.form-control(name = "outline", placeholder=textPlaceholder) #{(undefined===sequenceOutline || sequenceOutline==='') ? null : sequenceOutline}
+
+  div.form-group
+    button.btn.btn-primary.btn-lg(type='submit') Fusionner
