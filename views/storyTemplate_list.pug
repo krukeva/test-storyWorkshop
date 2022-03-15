@@ -1,0 +1,20 @@
+extends layouts/main-layout
+
+include includes/mixins.pug
+
+block content
+  h1.my-3.py-3= title
+
+  .w-100
+    -let n=1
+        p Créer un nouveau synopsis (choisir le nombre de séquences)&nbsp;:
+          .list-group.list-group-horizontal.ml-5
+            while n<5
+              a.list-group-item.btn.btn-secondary(href='/storytemplate/create?nb_sequences='+n) #{n}
+              -n++
+
+  .list-group.my-3.py-3
+    each template in template_list
+      +templateAsItem(template)
+    else
+      li La base de synopsis est vide.

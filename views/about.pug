@@ -22,6 +22,8 @@ block message
 
   ul(class='w-50')
       li
+        a(href='/storyTemplates') Tous les synopsis
+      li
         a(href='/stories') Toutes les histoires
       li
         a(href='/events') Tous les événements
@@ -30,6 +32,13 @@ block message
 
       hr
 
+      li
+        -let n=1
+        p Créer un nouveau synopsis (choisir le nombre de séquences)&nbsp;:
+          .list-group.list-group-horizontal.ml-5
+            while n<5
+              a.list-group-item.btn.btn-secondary(href='/storytemplate/create?nb_sequences='+n) #{n}
+              -n++
       li
         a(href='/story/create') Créer une nouvelle histoire
       li

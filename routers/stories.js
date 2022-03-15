@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const story_controller = require('../controllers/storyController.js');
-
 const story_random = require('../controllers/storyRandom.js');
 const sequencing_controller = require('../controllers/sequencingController.js');
 
@@ -14,7 +13,10 @@ router.get('/create', story_controller.story_create_get);
 router.post('/create', story_controller.story_create_post);
 
 // GET request for a random Story.
-router.get( '/random', story_random.story_random );
+router.get( '/fromTemplate', story_random.story_fromTemplate_get );
+
+// POST request for a random Story.
+router.post( '/fromTemplate', story_random.story_fromTemplate_post );
 
 // GET request to delete Story.
 router.get('/:id/delete', story_controller.story_delete_get);

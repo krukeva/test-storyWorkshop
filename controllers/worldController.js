@@ -82,7 +82,7 @@ exports.world_create_get = function(req, res) {
 exports.world_create_post = [
     // Validate and sanitize the name field.
     body('name')
-    .trim().isLength({ min: 1 }).withMessage('Il faut un nom pour ce monde.').escape()
+    .trim().isLength({ min: 1 }).withMessage('Il faut un nom pour ce monde.')
     .custom( (value) => {
         return World.find( {name: value } ).then( otherWorld => {
             if( otherWorld.length ) {
@@ -91,7 +91,7 @@ exports.world_create_post = [
         });
     } ),
 
-    body('description', 'Il faut une description.').trim().isLength({ min: 1 }).escape(),
+    body('description', 'Il faut une description.').trim().isLength({ min: 1 }),
 
     // Process request after validation and sanitization.
     (req, res, next) => {
@@ -246,7 +246,7 @@ exports.world_update_get = function(req, res) {
 exports.world_update_post = [
     // Validate and sanitize the name field.
     body('name')
-    .trim().isLength({ min: 1 }).withMessage('Il faut un nom pour ce monde.').escape()
+    .trim().isLength({ min: 1 }).withMessage('Il faut un nom pour ce monde.')
     .custom( (value, {req} ) => {
         return World.findOne( {name: value, _id: { $ne: req.params.id }} ).then( otherWorld => {
             if( otherWorld ) {
@@ -255,7 +255,7 @@ exports.world_update_post = [
         });
     } ),
 
-    body('description', 'Il faut une description.').trim().isLength({ min: 1 }).escape(),
+    body('description', 'Il faut une description.').trim().isLength({ min: 1 }),
 
     // Process request after validation and sanitization.
     (req, res, next) => {

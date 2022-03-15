@@ -54,8 +54,13 @@ function compareEvents( ev1, ev2 ) {
     }
 }
 
-exports.event_subeventCoverage = async function( eventID ) {
-    let subevents = await Event.find( { parentId: eventID });
+exports.event_subeventCoverage = async function( eventID, keyEvents=true ) {
+    let subevents;
+    if(keyEvents == true) {
+        subevents = await Event.find( { parentId: eventID });
+    } else {
+        subevents = await Event.find( { parentId: eventID, isKey: { $ne: true} });
+    }
 
     let dateTimeMinSup = '9999-12-31T23:59:59';
     let dateTimeMaxInf = '0000-01-01T00:00:00';
@@ -259,8 +264,8 @@ exports.event_create_get = function(req, res) {
 // Handle event create on POST.
 exports.event_create_post = [
     // Validate and sanitize the name field.
-    body('name', 'Event name required').trim().isLength({ min: 1 }).escape(),
-    body('description', 'Event description required').trim().isLength({ min: 1 }).escape(),
+    body('name', 'Event name required').trim().isLength({ min: 1 }),
+    body('description', 'Event description required').trim().isLength({ min: 1 }),
 
     // Process request after validation and sanitization.
     (req, res, next) => {
@@ -495,9 +500,9 @@ exports.event_update_get = function(req, res) {
 
 // Handle event update on POST.
 exports.event_update_post = [
-    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }).escape(),
+    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }),
 
-    body('description', 'L\'événement doit avoir une description.').trim().isLength({ min: 1 }).escape(),
+    body('description', 'L\'événement doit avoir une description.').trim().isLength({ min: 1 }),
 
     body('startDate').isDate()
         .custom( (value, { req }) => {
@@ -628,9 +633,9 @@ exports.subevent_create_get = function(req, res) {
 
 // Handle subevent creation on POST.
 exports.subevent_create_post = [
-    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }).escape(),
+    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }),
 
-    body('description', 'L\'événement doit avoir une description.').trim().isLength({ min: 1 }).escape(),
+    body('description', 'L\'événement doit avoir une description.').trim().isLength({ min: 1 }),
 
     body('startDate').isDate()
         .custom( (value, { req }) => {
@@ -721,7 +726,7 @@ exports.randomEventTree_create_get = async function(req, res) {
 
 // Handle subevent creation on POST.
 exports.randomEventTree_create_post = [
-/*    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }).escape(),
+/*    body('name', 'L\'événement doit avoir un nom.').trim().isLength({ min: 1 }),
 */    
     function(req, res, next) {
 

@@ -1,9 +1,10 @@
 extends layouts/form-layout
 
 block form
-    input(type="hidden", name = "dateMinSup", value = (undefined===dateMinSup ? '' : dateMinSup))
-    input(type="hidden", name = "dateMaxInf", value = (undefined===dateMaxInf ? '' : dateMaxInf))
-    input(type="hidden", name = "coveringEventID", value = (undefined===story.coveringEvent ? null : story.coveringEvent._id))
+    input(type="hidden", name = "dateTimeMinSup", value = (undefined===dateTimeMinSup ? '' : dateTimeMinSup))
+    input(type="hidden", name = "dateTimeMaxInf", value = (undefined===dateTimeMaxInf ? '' : dateTimeMaxInf))
+    if story
+      input(type="hidden", name = "coveringEventID", value = (undefined===story.coveringEvent ? null : story.coveringEvent._id))
    
     div.form-group
       label(for = "title") Titre&nbsp;:
@@ -13,9 +14,11 @@ block form
       .form-group
         label(for = "startDate") Date de début&nbsp;:&nbsp;&nbsp;
         input#startDate(type="date", name = "startDate", value = (undefined===mainEvent ? '' : mainEvent.startDate))
+        input#startTime(type="time", name = "startTime", value = (undefined===mainEvent ? '' : mainEvent.startTime))
       .form-group
         label(for = "endDate") Date de fin&nbsp;:&nbsp;&nbsp;
         input#endDate(type="date", name = "endDate", value = (undefined===mainEvent ? '' : mainEvent.endDate))
+        input#endTime(type="time", name = "endTime", value = (undefined===mainEvent ? '' : mainEvent.endTime))
 
     div.form-group
       label(for = "world") Monde&nbsp;:
@@ -23,8 +26,8 @@ block form
         option(value=null)
         for world in world_list
           -let worldId = typeof world._id === 'string' ? world._id : world._id.toString()
-          -let storyWorldId = typeof story.world._id === 'string' ? story.world._id : story.world._id.toString()
           if story
+            -let storyWorldId = typeof story.world._id === 'string' ? story.world._id : story.world._id.toString()
             option(value=world._id selected=(worldId===storyWorldId ? 'selected' : false) ) #{world.name}
           else
             option(value=world._id) #{world.name}
@@ -36,7 +39,8 @@ block form
     button.btn.btn-primary(type='submit') Enregistrer
 
 block alert
-  if dateMinSup && dateMaxInf
+  if dateTimeMinSup && dateTimeMaxInf
     div.message
-      p(style='color:red') Attention&nbsp;: Cette histoire contient déjà des événements qui se déroulent entre le
-        |  #{formateDate(dateMinSup)} et le #{formateDate(dateMaxInf)}.
+      p(style='color:red') Attention&nbsp;: Cette histoire contient déjà des événements ou est déjà découpée en séquences.
+        | les variations de date de début et de date de fin sont limitées entre le
+        |  #{formateDateTime(dateTimeMinSup)} et le #{formateDateTime(dateTimeMaxInf)}.

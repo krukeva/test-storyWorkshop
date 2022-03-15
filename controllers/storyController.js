@@ -5,8 +5,8 @@ const Event = require('../models/event');
 const async = require('async');
 const { body, validationResult } = require("express-validator");
 
-//const event_controller = require('../controllers/eventController.js');
-//const sequencing_controller = require('../controllers/sequencingController.js');
+const event_controller = require('../controllers/eventController.js');
+const sequencing_controller = require('../controllers/sequencingController.js');
 
 const { formateDate, formateDateTime } = require('../controllers/utils-dateTime.js');
 
@@ -94,10 +94,22 @@ exports.story_create_get = function(req, res) {
 exports.story_create_post = [
     
     // Validate and sanitize fields.
-    body('title', 'Il faut un titre.').trim().isLength({ min: 1 }).escape(),
-    body('description', 'Il faut une description.').trim().isLength({ min: 1 }).escape(),
-    // A FAIRE : vérifier les dates
+    body('title', 'Il faut un titre.').trim().isLength({ min: 1 }),
 
+    body('description', 'Il faut une description.').trim().isLength({ min: 1 }),
+    
+    body('startDate').isDate(),
+
+    body('endDate').isDate()
+    .custom( (value, { req }) => {
+
+        let startDateTime   = req.body.startDate + 'T'+ req.body.startTime;
+        let endDateTime     = value + 'T'+ req.body.endTime;
+
+        return ( startDateTime.localeCompare( endDateTime ) <=0 )
+    } )
+    .withMessage('L\'histoire ne peut pas se terminer avant d\'avoir commencé.'),
+    
     // Process request after validation and sanitization.
     (req, res, next) => {
         // Extract the validation errors from a request.
@@ -110,7 +122,9 @@ exports.story_create_post = [
             coveringEvent: {
                 description: req.body.description,
                 startDate: req.body.startDate,
+                startTime: req.body.startTime,
                 endDate: req.body.endDate,
+                endTime: req.body.endTime,
             }
         } 
 
@@ -140,10 +154,10 @@ exports.story_create_post = [
                     // Création d'un événement avec les dates indiquées.
                     let event = new Event(
                         { 
-                            name: req.body.title + ' -- Evénement couvrant pour l\'histoire',
+                            name: '-- Evénement couvrant pour l\'histoire "' + req.body.title + '" --',
                             description: req.body.description,
-                            startDateTime: req.body.startDate + "T00:00:00",
-                            endDateTime: req.body.endDate + "T23:59:59",
+                            startDateTime:  req.body.startDate  + "T" + req.body.startDate + ":00",
+                            endDateTime:    req.body.endDate    + "T" + req.body.endDate   + ":59",
                             parentId: null,
                             isSequence: false
                         }
@@ -244,88 +258,189 @@ exports.story_delete_post = async function(req, res) {
 
 // Display story update form on GET.
 exports.story_update_get = function(req, res) {
-    async.parallel( {
-        story: function(callback) {
-            Story.findById( req.params.id )
+    let worlds = World.find();
+
+    let storyQuery = Story.findById( req.params.id )
             .populate('coveringEvent')
-            .populate('world')
-            .exec(callback);
-        },
+            .populate('world');
 
-        worlds: function(callback) {
-            World.find().exec(callback);
+    let bounds = storyQuery.then( myStory => {
+
+        if( myStory.coveringEvent ){
+
+            // Gestion des événements indépendants
+            let independantEvents = Event.find( { 
+                parentId: myStory.coveringEvent._id,
+                isSequence: {$ne: true},
+            } );
+
+            let dates = independantEvents.then( subevents => {
+
+                if (subevents.length>0 ) {
+                    let myDateTimeMinSup = myStory.coveringEvent.endDateTime;
+                    let myDateTimeMaxInf = myStory.coveringEvent.startDateTime;
+                    if ( subevents.length ) {
+                        for(i=0; i<subevents.length; i++){
+                            if ( !subevents[i].isSequence ) {
+                                myDateTimeMinSup = myDateTimeMinSup<subevents[i].startDateTime
+                                ? myDateTimeMinSup : subevents[i].startDateTime;
+                                myDateTimeMaxInf = myDateTimeMinSup>subevents[i].endDateTime
+                                ? myDateTimeMaxInf : subevents[i].endDateTime;    
+                            } 
+                        }
+                    }
+                    
+                    return [ myDateTimeMinSup, myDateTimeMaxInf ];
+                } else {
+                    return [];
+                }
+                
+            });
+
+            // Gestion des événements des séquences
+            let sequencing = sequencing_controller.sequencing_read( myStory );
+
+            let boundsOfSequences = sequencing
+            .then( ( [sequences, infoSequences] ) => {
+                if ( sequences.length>0 ) {
+                    let myDateTimeMinSup;
+                    let myDateTimeMaxInf;
+                    // Borne sup pour le début de l'histoire
+                    //=> c'est le début du premier événement de la première séquence
+                    // qui peut être un simple événement ou l'événement-clef.
+                    
+                    if( infoSequences[0][0].dateTimeMinSup <= infoSequences[0][1].startDateTime ) {
+                        myDateTimeMinSup = infoSequences[0][0].dateTimeMinSup;
+                    } else {
+                        myDateTimeMinSup = infoSequences[0][1].startDateTime;
+                    }
+                
+                    // Borne inf pour la fin de l'histoire
+                    // C'est la borne de fin de l'événement point de bascule de la dernière séquence
+                    let endKeyEvent = infoSequences[sequences.length-1][1];
+                    let innerBounds = event_controller.event_subeventCoverage(endKeyEvent._id, false);
+                    
+                    myDateTimeMaxInf = innerBounds.then( ({ dateTimeMaxInf }) => {
+
+                        // Minimum imposé par les sous-événements dans la séquence ou dans l'événement point de bascule
+                        let minOfevents;
+                        if (infoSequences[sequences.length-1][0].dateTimeMaxInf >= dateTimeMaxInf ) {
+                            minOfevents = infoSequences[sequences.length-1][0].dateTimeMaxInf;
+                        } else {
+                            minOfevents = dateTimeMaxInf;
+                        }
+
+                        // On renvoie la date la plus tardive entre le minimum imposé et la date de début
+                        // de l'événement point de bascule.
+
+                        return minOfevents >= endKeyEvent.startDateTime ? minOfevents:endKeyEvent.startDateTime;
+                    });
+
+                    return Promise.all( [ myDateTimeMinSup, myDateTimeMaxInf ]);
+
+                } else {
+                    return [];
+                }
+            });
+
+            return Promise.all( [ dates, boundsOfSequences ] )
+            .then( ([ dates, boundsOfSequences ]) => {
+
+                console.log( "Bornes hors séquence" );
+                console.log( dates );
+                console.log( "Bornes des séquences" );
+                console.log( boundsOfSequences );
+
+                // S'il y a un séquencement et des événements hors séquence, il faut comparer.
+                if ( dates.length>0 && boundsOfSequences.length>0 ) {
+                    let minSup = dates[0] <= boundsOfSequences[0]
+                    ? dates[0]
+                    : boundsOfSequences[0];
+
+                    let maxInf = dates[1] >= boundsOfSequences[1]
+                        ? dates[1]
+                        : boundsOfSequences[1];
+
+                        return { myStory, minSup, maxInf };
+
+                } else if( boundsOfSequences.length>0) {
+                    let minSup = boundsOfSequences[0];
+                    let maxInf = boundsOfSequences[1];
+                    return { myStory, minSup, maxInf }
+
+                } else if ( dates.length>0 ) {
+                    let minSup = dates[0];
+                    let maxInf = dates[1];
+                    return { myStory, minSup, maxInf }                    
+                } else {
+                    return { myStory };
+                }
+            }) ;
+        } else {
+            console.log( 'hello')
+            return { myStory };
         }
-    }, function(err, results) {
-        if (err) { return next(err); }
+    });
 
+    Promise.all([worlds, bounds]).then( result => {
         let renderParameters = {
             title: 'Modifier une histoire',
-            story: results.story,
-            world_list: results.worlds,
+            story: result[1].myStory,
+            world_list: result[0],
         };
 
-        if( results.story.coveringEvent ){
-            renderParameters.mainEvent = results.story.coveringEvent;
+        if( result[1].myStory.coveringEvent ){
+            renderParameters.mainEvent = result[1].myStory.coveringEvent;
+            renderParameters.dateTimeMinSup = result[1].minSup? result[1].minSup.slice(0,16) : '';
+            renderParameters.dateTimeMaxInf = result[1].maxInf? result[1].maxInf.slice(0,16) : '';
             //Pour passer la fonction de formatage des dates
             renderParameters.formateDate = formateDate; 
+            renderParameters.formateDateTime = formateDateTime;
 
-            // Recherche des bornes de dates des sous-événements
-            Event.find( { parentId: results.story.coveringEvent._id} )
-            .exec( (err, subevents) => {
-                if (err) { return next(err); }
-
-                if ( subevents.length ) {
-                    let dateMinSup = results.story.coveringEvent.endDate;
-                    let dateMaxInf = results.story.coveringEvent.startDate;
-                    for(i=0; i<subevents.length; i++){
-                        dateMinSup = dateMinSup<subevents[i].startDate
-                            ? dateMinSup : subevents[i].startDate;
-                        dateMaxInf = dateMinSup>subevents[i].endDate
-                            ? dateMaxInf : subevents[i].endDate;    
-                    }
-                    renderParameters.dateMinSup = dateMinSup;
-                    renderParameters.dateMaxInf = dateMaxInf;
-                }
-
-                res.render('story_form', renderParameters );
-            })
-
-            
+            res.render('story_form', renderParameters );
         } else {
             res.render('story_form', renderParameters );
         }
-    });
+    })
 };
 
 // Handle story update on POST.
 exports.story_update_post = [
-    body('title', 'L\'histoire doit avoir un titre.').trim().isLength({ min: 1 }).escape(),
+
+    body('title', 'L\'histoire doit avoir un titre.').trim().isLength({ min: 1 }),
     
-    body('description', 'L\'histoire doit avoir un résumé.').trim().isLength({ min: 1 }).escape(),
+    body('description', 'L\'histoire doit avoir un résumé.').trim().isLength({ min: 1 }),
 
     body('startDate').isDate()
-        .custom( (value, { req }) => {        
-            if( req.body.dateMinSup === '') {
-                return true;
+        .custom( (value, { req } ) => {
+            theDate = value + 'T'+ req.body.startTime;
+            if( req.body.dateTimeMinSup ) {
+                return ( theDate.localeCompare( req.body.dateTimeMinSup ) <=0 )
             } else {
-                return ( value <= req.body.dateMinSup );
+                return true;
             }
          } )
-        .withMessage('L\'histoire doit commencer avant le début de son premier événement.'),
+        .withMessage('La date de début de l\'histoire est incompatible des événements existants.'),
 
     body('endDate').isDate()
         .custom( (value, { req }) => {
-            return ( req.body.startDate <= value );
-         } )
+
+            let startDateTime   = req.body.startDate + 'T'+ req.body.startTime;
+            let endDateTime     = value + 'T'+ req.body.endTime;
+
+            return ( startDateTime.localeCompare( endDateTime ) <=0 )
+        } )
         .withMessage('L\'histoire ne peut pas se terminer avant d\'avoir commencé.')
-        .custom( (value, { req }) => {
-            if ( req.body.dateMaxInf === '') {
-                return true;
+        .custom( (value, { req } ) => {
+            let theDate = value + 'T'+ req.body.endTime;
+            
+            if( req.body.dateTimeMaxInf ) {
+                return ( req.body.dateTimeMaxInf.localeCompare( theDate ) <=0 )
             } else {
-                return ( req.body.dateMaxInf <= value );
+                return true;
             }
          } )
-        .withMessage('L\'histoire doit se terminer après la fin de son dernier sous-événement.'),
+        .withMessage('La date de fin de l\'histoire est incompatible des événements existants.'),
     
     // Process request after validation and sanitization.
     function(req, res) {
@@ -336,7 +451,9 @@ exports.story_update_post = [
             name: 'Evénement couvrant de l\'histoire ' + req.body.title,
             description: req.body.description,
             startDate: req.body.startDate,
+            startTime: req.body.startTime,
             endDate: req.body.endDate,
+            endTime: req.body.endTime,
         };
 
         let newStory = {
@@ -344,115 +461,95 @@ exports.story_update_post = [
             world: { _id: req.body.world },
         }
 
+        if (!errors.isEmpty()) {
 
-        Story.findById( req.params.id ).populate('coveringEvent')
-        .exec( ( err, story ) => {
-            if (err) { return next(err); }
+            // There are errors. Render the form again with sanitized values/error messages.
+            World.find().sort({name : 1}).exec( (err, worlds) => {
+                if (err) { return next(err); }
 
-            if (!errors.isEmpty()) {
-                // There are errors. Render form again with sanitized values/error messages.
-    
-                async.parallel( {
-    
-                    worlds: function(callback) {
-                        World.find()
-                        .sort({name : 1})
-                        .exec(callback);
-                    },
-    
-                    subevents: function(callback) {
-                        if(story.coveringEvent) {
-                            Event.find( { parentId: story.coveringEvent._id } )
-                            .exec( callback);
-                        } else {
-                            callback( err, null );
-                        }
-                    }
-    
-                }, function(err, results)  {
-                    if (err) { return next(err); }                
-    
-                    let renderParameters = {
-                        title: 'Modifier une histoire',
-                        story: newStory,
-                        world_list: results.worlds,
-                        mainEvent: newEvent,
-                        errors: errors.array()
-                    };
-    
-                    if ( story.coveringEvent && results.subevents.length ) {    
-                        renderParameters.formateDate = formateDate; 
-                        let dateMinSup = story.coveringEvent.endDate;
-                        let dateMaxInf = story.coveringEvent.startDate;
-                        for(i=0; i<results.subevents.length; i++){
-                            dateMinSup = dateMinSup<results.subevents[i].startDate
-                                ? dateMinSup : results.subevents[i].startDate;
-                            dateMaxInf = dateMinSup>results.subevents[i].endDate
-                                ? dateMaxInf : results.subevents[i].endDate;    
-                        }
-                        renderParameters.dateMinSup = dateMinSup;
-                        renderParameters.dateMaxInf = dateMaxInf;
-                    }
-        
-                    // On affiche le formulaire avec les données entrées et les erreurs
-                    res.render('story_form', renderParameters);
-                });
-                return;
-            } else {
-                // Les données sont valides.
-                // On crée l'événement "couvrant" si nécessaire et on met à jour l'histoire.
-                let event = { 
-                        name: newEvent.name,
-                        description: newEvent.description,
-                        startDateTime: newEvent.startDate + "T00:00:00",
-                        endDateTime: newEvent.endDate + "T23:59:59",
-                        parentId: null,
-                        isSequence: false
+                let renderParameters = {
+                    title: 'Modifier une histoire',
+                    story: newStory,
+                    world_list: worlds,
+                    mainEvent: newEvent,
+                    dateTimeMinSup: req.body.dateTimeMinSup,
+                    dateTimeMaxInf: req.body.dateTimeMaxInf,
+                    formateDateTime:formateDateTime,
+                    errors: errors.array()
                 };
 
+                res.render('story_form', renderParameters);
+            });
+
+        } else {
+            // Les données sont valides.
+            // On crée l'événement "couvrant" si nécessaire et on met à jour l'histoire.
+            let event = { 
+                name: newEvent.name,
+                description: newEvent.description,
+                startDateTime:  newEvent.startDate + "T" + newEvent.startTime + ":00",
+                endDateTime:    newEvent.endDate   + "T" + newEvent.endTime   + ":59",
+                parentId: null,
+                isSequence: false
+            };
+
+            Story.findById( req.params.id ).populate('coveringEvent').exec( (err, story) => {
+                if (err) { return next(err); }
+
                 if ( story.coveringEvent ) {
-                    async.parallel( {
-                        updateStory:function(callback) {
-                            Story.findByIdAndUpdate(req.params.id, newStory)
-                            .exec(callback);
-                        },
+                    let updateCoveringEvent = Event.findByIdAndUpdate(story.coveringEvent._id, event);
+                    let updateStory = Story.findByIdAndUpdate(req.params.id, newStory);
 
-                        updateCoveringEvent: function(callback) {
-                            Event.findByIdAndUpdate(story.coveringEvent._id, event)
-                            .exec(callback);
+                    //On vérifie s'il faut mettre à jour les séquences
+                    let done = new Promise( ( resolve, reject ) => {
+                        let updateFirstSequence = (event.startDateTime.slice(0,19).localeCompare( story.coveringEvent.startDateTime.slice(0,19) ) != 0 );
+                        let updateLastSequence = ( event.endDateTime.slice(0,19).localeCompare( story.coveringEvent.endDateTime.slice(0,19) ) != 0 );
+    
+                        if ( updateFirstSequence || updateLastSequence ){
+
+                            let sequencing = sequencing_controller.sequencing_read( story );
+    
+                            sequencing.then( ( [sequences, infoSequences] ) => {
+
+                                if ( sequences.length>0 ) {
+                                    let updateFS = new Promise( ( FS_resolve, FS_reject ) => {
+                                        if( updateFirstSequence ) {
+                                            Event.findByIdAndUpdate(sequences[0]._id, { startDateTime: event.startDateTime.slice(0,19) })
+                                            .exec( err => { FS_resolve(true) } );
+                                        } else {
+                                            FS_resolve(true);
+                                        }
+                                    });
+                                    
+                                    let updateLS = new Promise( ( LS_resolve, LS_reject ) => {
+                                        if( updateLastSequence ) {
+                                            let updateSequence = Event.findByIdAndUpdate(sequences[sequences.length-1]._id, { endDateTime: event.endDateTime.slice(0,19) });
+                                            let endKeyEvent = infoSequences[sequences.length-1][1];
+                                            let updateKeyEvent = Event.findByIdAndUpdate(endKeyEvent._id, { endDateTime: event.endDateTime.slice(0,19) });
+                                           
+                                            Promise.all([updateSequence,updateKeyEvent]).then( ()=> (LS_resolve(true)));
+                                        } else {
+                                            LS_resolve(true)
+                                        }
+                                    });
+                                    
+                                    return Promise.all([updateFS,updateLS]);
+                                }                                
+                            })
+                            .then( ()=> { resolve( true ) } );
+                                                
+                        } else {
+                            resolve( true );
                         }
+                    } );
+                    
 
-                     }, function(err) {
-                        if (err) { return next(err); }
-
+                    Promise.all([updateCoveringEvent, updateStory, done ]).then( ()=> {
                         res.redirect( '/story/'+req.params.id );
                     });
-                    
-                } else {
-                    async.waterfall([
-                        // Création d'un événement avec les dates indiquées.
-                        function(callback) {
-                            let myEvent= new Event( event );
-                            let error = null;
-                            myEvent.save(function (err) {
-                                if (err) { error = err; }
-                            });
-                            callback( error, myEvent._id );
-                        },
 
-                        // Mise à jour de l'histoire.
-                        function( eventID ) {
-                            newStory.coveringEvent = eventID;
-                            Story.findByIdAndUpdate(req.params.id, newStory).exec( err => {
-                                if (err) { return next(err); }
-                                
-                                //successful - redirect to new story record.
-                                res.redirect( '/story/'+req.params.id );
-                            });
-                        }
-                    ]);
                 }
-            }
-        });
+            })
+        }
     }
 ];

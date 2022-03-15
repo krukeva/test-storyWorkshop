@@ -1,0 +1,48 @@
+extends layouts/form-layout
+
+
+mixin sequenceOfSynopsis(i)
+  h3 Séquence #{i}
+  div.ml-5.mb-5
+
+    div.form-group
+      p.h5
+        label(for = "startingConditions"+i) Les conditions au début de la séquence&nbsp;:
+        textarea#description.form-control(name = "startingConditions"+i) !{synopsis ? synopsis.sequences[i-1].startingConditions : ''}
+
+    div.form-group
+      p.h5
+        label(for = "sequenceOutline"+i) L'évolution de la situation&nbsp;:
+        textarea#description.form-control(name = "sequenceOutline"+i) !{synopsis ? synopsis.sequences[i-1].outline : ''}            
+
+    div.form-group
+      p.h5
+        label(for = "shiftingConditions"+i) Les conditions qui font basculer&nbsp;:
+        textarea#description.form-control(name = "shiftingConditions"+i) !{synopsis ? synopsis.sequences[i-1].shiftingConditions : ''}
+
+    div.form-group
+      p.h5
+        if i<max
+          label(for = "keyEvent"+i) L'événement qui fait basculer vers la séquence suivante&nbsp;:
+        else
+          label(for = "keyEvent"+i) L'événement de clôture&nbsp;:
+        textarea#description.form-control(name = "keyEvent"+i) !{synopsis ? synopsis.sequences[i-1].keyEvent : ''}
+
+
+block form
+  
+    div.form-group
+      label(for = "name") Nom&nbsp;:
+      input#name.form-control(type='text', name = "name", value = (undefined===synopsis ? '' : synopsis.name))
+
+    div.form-group
+      label(for = "description") Résumé&nbsp;:
+      textarea#description.form-control(name = "description", rows='3') !{ undefined===synopsis ? '' : synopsis.description }
+
+    -let max=parseInt(nb_sequences)
+    -let n=1
+    while n<=max
+        +sequenceOfSynopsis(n.toString())
+        -n++
+
+    button.btn.btn-primary(type='submit') Enregistrer

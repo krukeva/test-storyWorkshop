@@ -1,0 +1,43 @@
+extends layouts/card-layout.pug
+
+include includes/mixins.pug
+
+block card-body
+  -let cardTitle= storyTemplate.name
+  -let path= '/storytemplate/' + storyTemplate._id
+
+  +cardHeader(cardTitle, path, subtitle)
+  
+  h2.card-title Résumé
+  div.ml-5.mb-3
+    p.card-text #{storyTemplate.description}
+
+  if storyTemplate.sequences && storyTemplate.sequences.length
+    if storyTemplate.sequences.length>1
+      h2.card-title Séquences
+      div.ml-5
+        each sequence, index in storyTemplate.sequences
+          p.h4 Sequence #{ index+1 }
+          .ml-3.mb-3
+            p.h5 Conditions au début de la séquence&nbsp;:
+            p.ml-3= sequence.startingConditions
+            p.h5 Aperçu du déroulement&nbsp;:
+            p.ml-3= sequence.outline
+            p.h5 Conditions de basculement&nbsp;:
+            p.ml-3= sequence.shiftingConditions
+            if index < storyTemplate.sequences.length-1
+              p.h5 Point de bascule&nbsp;:
+            else
+              p.h5 Evénement de fin du scénario&nbsp;:
+            p.ml-3= sequence.keyEvent
+    else
+      h2.card-title Détails&nbsp;:
+      .ml-5
+        p.h4 Conditions au début&nbsp;:
+        p.ml-3= storyTemplate.sequences[0].startingConditions
+        p.h4 Aperçu du déroulement&nbsp;:
+        p.ml-3= storyTemplate.sequences[0].outline
+        p.h4 Conditions de basculement&nbsp;:
+        p.ml-3= storyTemplate.sequences[0].shiftingConditions
+        p.h4 Evénement de fin du scénario&nbsp;:
+        p.ml-3= storyTemplate.sequences[0].keyEvent

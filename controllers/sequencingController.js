@@ -11,10 +11,10 @@ const event_controller = require('../controllers/eventController.js')
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-sequencing_read = async function( story) {
+exports.sequencing_read = async function( story) {
 
     infoSequence = async function( sequence ) {
-        innerBounds = await event_controller.event_subeventCoverage(sequence);
+        innerBounds = await event_controller.event_subeventCoverage(sequence, false);
         keyEvent = await Event.findOne( {
             parentId: sequence._id,
             isKey: true,
@@ -46,7 +46,7 @@ sequencing_read = async function( story) {
 // Display the sequence creation form on GET.
 exports.sequencing_get = async function(req, res) {
     const story = await Story.findById(req.params.id).populate('coveringEvent');
-    let sequencing = sequencing_read( story );
+    let sequencing = exports.sequencing_read( story );
 
     sequencing
     .then( ( [sequences, infoSequences] ) => {
@@ -133,7 +133,7 @@ exports.sequencing_create_post = [
     })
     .withMessage('Il y a un problème avec l\'événement parent.'),
 
-    body('keyEvents.*.description').isLength({ min: 1 }).escape()
+    body('keyEvents.*.description').isLength({ min: 1 })
     .withMessage('Les descriptions des points de bascule ne peuvent pas être vides.'),
 
     body('keyEvents.*.startDateTime').custom( value => {
@@ -174,7 +174,7 @@ exports.sequencing_create_post = [
         }
     }).withMessage('Il y a un problème de chevauchement entre les séquences.'),
 
-    body('sequenceOutlines.*').isLength({ min: 1 }).escape()
+    body('sequenceOutlines.*').isLength({ min: 1 })
     .withMessage('Les résumés des séquences ne peuvent pas être vides.'),
 
     async (req, res, next) => {
@@ -262,7 +262,7 @@ exports.sequencing_create_post = [
 // Display the sequencing update form on GET.
 exports.sequencing_update_get = async function(req, res) {
     let story = await Story.findById(req.params.id).populate('coveringEvent');
-    let sequencing = sequencing_read( story );
+    let sequencing = exports.sequencing_read( story );
 
     sequencing
         .then( ([sequences, infoSequences ]) => {
@@ -291,6 +291,7 @@ exports.sequencing_update_get = async function(req, res) {
 exports.sequencing_update_post = [
     // Mise en forme des données du formulaire
     function(req, res, next) {
+
         let parentEvent= {
             _id: req.body.parentEventID,
             startDateTime: req.body.parentEvent_startDateTime,
@@ -299,6 +300,7 @@ exports.sequencing_update_post = [
     
         let keyEvents=[];
         let sequenceOutlines=[];
+        let sequenceInnerBounds=[];
         let i=1;
         while( i <= parseInt(req.body['nb_sequences']) ) {
             keyEvents.push(
@@ -310,6 +312,10 @@ exports.sequencing_update_post = [
                                 + 'T' + req.body['endTime' + i.toString()] + ":00",
                 });
             sequenceOutlines.push( req.body['outline' + i.toString()].trim() );
+            sequenceInnerBounds.push( {
+                dateTimeMinSup: req.body['dateTimeMinSup' + i.toString()].trim(),
+                dateTimeMaxInf: req.body['dateTimeMaxInf' + i.toString()].trim()
+            });
             i++;
         }
     
@@ -317,6 +323,7 @@ exports.sequencing_update_post = [
             parentEvent: parentEvent,
             keyEvents: keyEvents,
             sequenceOutlines: sequenceOutlines,
+            sequenceInnerBounds: sequenceInnerBounds,
         };
         next();
     },
@@ -333,7 +340,7 @@ exports.sequencing_update_post = [
     })
     .withMessage('Il y a un problème avec l\'événement parent.'),
 
-    body('keyEvents.*.description').isLength({ min: 1 }).escape()
+    body('keyEvents.*.description').isLength({ min: 1 })
     .withMessage('Les descriptions des points de bascule ne peuvent pas être vides.'),
 
     body('keyEvents.*.startDateTime').custom( value => {
@@ -366,15 +373,39 @@ exports.sequencing_update_post = [
         try{
             let ok=true;
             for (let i=0; i<value.length-1; i++){
-                ok=ok && value[i+1].startDateTime.localeCompare(value[i].endDateTime);
+                ok=ok && ( value[i].endDateTime.localeCompare(value[i+1].startDateTime < 0) );
             }
             return ok;
         } catch{
             return false;
         }
-    }).withMessage('Il y a un problème de chevauchement entre les séquences.'),
+    }).withMessage('Il y a un problème de chevauchement entre les événements-clefs (et donc les séquences).'),
 
-    body('sequenceOutlines.*').isLength({ min: 1 }).escape()
+    body('keyEvents').custom( ( value, { req } ) => {
+        try{
+            let ok=true;           
+            for (let i=0; i<value.length; i++){
+                ok=ok && (req.body.sequenceInnerBounds[i].dateTimeMaxInf.localeCompare(value[i].endDateTime) <=0 );
+            }
+            return ok;
+        } catch{
+            return false;
+        }
+    }).withMessage('Il y a un point de bascule qui se termine avant la fin des sous-événements de sa séquence.'),
+
+    body('keyEvents').custom( ( value, { req } ) => {
+        try{
+            let ok=true;
+            for (let i=0; i<value.length-1; i++){
+                ok=ok && ( value[i].endDateTime.localeCompare(req.body.sequenceInnerBounds[i+1].dateTimeMinSup) <= 0 );
+            }
+            return ok;
+        } catch{
+            return false;
+        }
+    }).withMessage('Il y a un point de bascule qui se termine après le début des sous-événements de la séquence suivante.'),
+
+    body('sequenceOutlines.*').isLength({ min: 1 })
     .withMessage('Les résumés des séquences ne peuvent pas être vides.'),
 
     async function(req, res) {
@@ -383,7 +414,7 @@ exports.sequencing_update_post = [
         const errors = validationResult( req );
 
         let story = await Story.findById(req.params.id).populate('coveringEvent');
-        let sequencing = await sequencing_read( story )
+        let sequencing = await exports.sequencing_read( story )
             .then( ([sequences, infoSequences ]) => {
                 let enrichedSequences = [];
                 for( let i=0; i<sequences.length; i++ ) {
@@ -622,7 +653,7 @@ exports.sequencing_reduce_get = async function(req, res) {
 
 // Handle sequence merging on POST.
 exports.sequencing_reduce_post = [
-    body('outline').isLength({ min: 1 }).escape()
+    body('outline').isLength({ min: 1 })
     .withMessage('La description de la séquence fusionnée ne peut pas être vide.'),    
     
     async function(req, res) {
@@ -776,7 +807,7 @@ exports.sequencing_augment_post = [
         req.body.sequenceOutlines = sequenceOutlines
         next();
     },
-    body('sequenceOutlines.*').isLength({ min: 1 }).escape()
+    body('sequenceOutlines.*').isLength({ min: 1 })
     .withMessage('Les descriptions des séquences ne peuvent pas être vides.'),
 
     body('keyEventCandidate').isLength({ min: 1 })

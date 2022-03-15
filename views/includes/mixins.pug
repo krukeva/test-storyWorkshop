@@ -26,8 +26,6 @@ mixin storyAsShortItem(myStory)
     else
       p.ml-3 #[em #{ myStory.coveringEvent.description }]
             
-
-
 mixin storyAsItem(myStory)
   .list-group-item.my-3.border
     .item-header
@@ -75,8 +73,10 @@ mixin worldAsItem(myWorld, myStory_list)
       else
         p #[em Il n'y a pas encore d'histoire dans ce monde.]
 
-
-
+mixin templateAsItem(myTemplate)
+  .list-group-item.mb-3
+    a(href='/storytemplate/'+myTemplate._id) #{myTemplate.name}
+    p.ml-3 #{myTemplate.description}
 
 
 mixin cardHeader(myTitle, myPath, mySubtitle=null)

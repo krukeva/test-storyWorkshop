@@ -1,0 +1,33 @@
+extends layouts/form-layout
+
+block form
+
+    div.form-group
+      label(for = "world") Monde&nbsp;:
+      select#world.form-control(type='select', placeholder='Choisissez un monde', name = "world", required='true')
+        option(value=null)
+        for world in world_list
+          -let worldId = typeof world._id === 'string' ? world._id : world._id.toString()
+          if story
+            -let storyWorldId = typeof story.world._id === 'string' ? story.world._id : story.world._id.toString()
+            option(value=world._id selected=(worldId===storyWorldId ? 'selected' : false) ) #{world.name}
+          else
+            option(value=world._id) #{world.name}
+    
+    div.form-group
+      label(for = "storyTemplate") Synopsis&nbsp;:
+      select.form-control(type='select', placeholder='Choisissez un synopsis', name = "storyTemplate", required='true')
+        option(value=null)
+        for template in storyTemplate_list
+          -let templateId = typeof template._id === 'string' ? template._id : template._id.toString()
+          if story
+            -let storyTemplateId = typeof story.template._id === 'string' ? story.template._id : story.template._id.toString()
+            option(value=template._id selected=(templateId===storyTemplateId ? 'selected' : false) ) #{template.name}
+          else
+            option(value=template._id) #{template.name}
+
+    div.form-group
+      label(for = "title") Titre&nbsp;:
+      input#title.form-control(type='text', name = "title", value = (undefined===story ? '' : story.title))
+
+    button.btn.btn-primary(type='submit') Enregistrer

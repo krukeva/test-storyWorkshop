@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const worlds = require('./routers/worlds.js');
 const events = require('./routers/events.js');
 const stories = require('./routers/stories.js');
-
+const storyTemplates = require('./routers/storyTemplates.js');
 
 // for parsing application/json
 router.use(bodyParser.json()); 
@@ -15,6 +15,7 @@ router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true })); 
 
 router.use('/events?', events );
+router.use('/storyTemplates?', storyTemplates );
 router.use('/story?(ies)?', stories );
 router.use('/worlds?', worlds );
 

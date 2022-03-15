@@ -1,0 +1,16 @@
+extends layouts/message-layout.pug
+
+
+block message
+  div.message
+ 
+      h3 Voulez-vous vraiment supprimer le synopsis suivant&nbsp?
+
+      div.itemToDelete
+        h4= storyTemplate.name
+        p= storyTemplate.description
+
+      form.deleteButton( method='POST' action='')
+        div.form-group
+          input#worldID.form-control(type='hidden', name='storyTemplateID', value=storyTemplate._id )
+        button.btn.btn-primary.btn-lg(type='submit') Supprimer
