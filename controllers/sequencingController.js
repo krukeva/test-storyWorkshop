@@ -157,7 +157,7 @@ exports.sequencing_create_post = [
 
     body('keyEvents.*').custom( value => {
         try{
-            return value.endDateTime.localeCompare(value.startDateTime) < 0;
+            return value.startDateTime.localeCompare(value.endDateTime) <= 0;
         } catch{
             return false;
         }
@@ -167,7 +167,7 @@ exports.sequencing_create_post = [
         try{
             let ok=true;
             for (let i=0; i<value.length-1; i++){
-                ok=ok && value[i+1].startDateTime.localeCompare(value[i].endDateTime);
+                ok=ok && (value[i+1].startDateTime.localeCompare(value[i].endDateTime) > 0 );
             }
             return ok;
         } catch{
@@ -374,7 +374,7 @@ exports.sequencing_update_post = [
         try{
             let ok=true;
             for (let i=0; i<value.length-1; i++){
-                ok=ok && ( value[i].endDateTime.localeCompare(value[i+1].startDateTime < 0) );
+                ok=ok && ( value[i].endDateTime.localeCompare(value[i+1].startDateTime ) <= 0 );
             }
             return ok;
         } catch{
@@ -569,14 +569,13 @@ exports.sequencing_delete_post = async function(req, res) {
             ]);
             
             for(let i=0; i<eventsToDelete.length; i++) {
-                console.log(eventsToDelete[i]._id);
                 if ( eventsToDelete[i].descendants ) {
                     for(let j=0; j<eventsToDelete[i].descendants.length; j++) {
                         Event.findByIdAndRemove(eventsToDelete[i].descendants[j]._id,
-                            (err) => console.log('erreur'));
+                            (err) => { if(err) { console.log('erreur') } });
                     }
                     Event.findByIdAndRemove(eventsToDelete[i]._id,
-                        (err) => console.log('erreur'));
+                        (err) => { if(err) { console.log('erreur') } });
                 }
             }
             res.redirect(story.url);

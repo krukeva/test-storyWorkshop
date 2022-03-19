@@ -14,9 +14,9 @@ mixin sequenceFormPart(i)
         p.h4
           label(for = "description") Résumé&nbsp;:
         textarea#description.form-control(name = "outline"+i) !{test_sequence ? sequences[i-1].description : ''}
-          if test_sequences
-            input(type="hidden", name ="dateTimeMinSup"+i, value=sequences[i-1].innerBounds.dateTimeMinSup)
-            input(type="hidden", name ="dateTimeMaxInf"+i, value=sequences[i-1].innerBounds.dateTimeMaxInf)
+        if test_sequence && sequences[i-1].innerBounds
+          input(type="hidden", name ="dateTimeMinSup"+i, value=sequences[i-1].innerBounds.dateTimeMinSup)
+          input(type="hidden", name ="dateTimeMaxInf"+i, value=sequences[i-1].innerBounds.dateTimeMaxInf)
 
       if test_events
         h4 Evénements de la séquence
