@@ -11,9 +11,10 @@ mixin sequenceFormPart(i)
       if test_sequence
         p #[em (du #{formateDateTime(sequences[i-1].startDateTime)} au #{formateDateTime(sequences[i-1].endDateTime)})]
       div.form-group
-            p.h4
-              label(for = "description") Résumé&nbsp;:
-            textarea#description.form-control(name = "outline"+i) !{test_sequence ? sequences[i-1].description : ''}
+        p.h4
+          label(for = "description") Résumé&nbsp;:
+        textarea#description.form-control(name = "outline"+i) !{test_sequence ? sequences[i-1].description : ''}
+          if test_sequences
             input(type="hidden", name ="dateTimeMinSup"+i, value=sequences[i-1].innerBounds.dateTimeMinSup)
             input(type="hidden", name ="dateTimeMaxInf"+i, value=sequences[i-1].innerBounds.dateTimeMaxInf)
 
@@ -32,14 +33,8 @@ mixin sequenceFormPart(i)
         div.date-group
           div.form-group
             label(for = "startDate") Date de début&nbsp;:&nbsp;&nbsp;
-            if i>1
               input(type="date", name = "startDate"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.startDate : parentEvent.startDate))
               input(type="time", name = "startTime"+i, value = (test_keyEvent ? sequences[i-1].keyEvent.startTime : parentEvent.startTime))
-            else
-              input(type="date", value = parentEvent.startDate, disabled)
-              input(type="time", value = parentEvent.startTime, disabled)
-              input(type="hidden", name = "startDate"+i, value = parentEvent.startDate)
-              input(type="hidden", name = "startTime"+i, value = parentEvent.startTime)
             
           div.form-group.mb-0
             label(for = "endDate") Date de fin&nbsp;:&nbsp;&nbsp;
@@ -56,9 +51,11 @@ mixin sequenceFormPart(i)
 
 block alert
   .alert
-     div.itemToHighlight
-       h4 Histoire&nbsp;:
-       +storyAsShortItem(story)
+    div.itemToHighlight
+      h4 Histoire&nbsp;:
+      p #[em (du #{formateDateTime(parentEvent.startDateTime)} au #{formateDateTime(parentEvent.endDateTime)})] 
+      +storyAsShortItem(story)
+      
 
 block form
   input( type='hidden', name='parentEventID', value=parentEvent._id)

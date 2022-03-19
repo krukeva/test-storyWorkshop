@@ -156,8 +156,8 @@ exports.story_create_post = [
                         { 
                             name: '-- Evénement couvrant pour l\'histoire "' + req.body.title + '" --',
                             description: req.body.description,
-                            startDateTime:  req.body.startDate  + "T" + req.body.startDate + ":00",
-                            endDateTime:    req.body.endDate    + "T" + req.body.endDate   + ":59",
+                            startDateTime:  req.body.startDate  + "T" + req.body.startTime + ":00",
+                            endDateTime:    req.body.endDate    + "T" + req.body.endTime   + ":59",
                             parentId: null,
                             isSequence: false
                         }

@@ -80,7 +80,8 @@ exports.sequencing_create_get = async function(req, res) {
         title: 'Couper une histoire en séquences',
         story: story,
         parentEvent: story.coveringEvent,
-        nb_sequences: req.query.nb
+        nb_sequences: req.query.nb,
+        formateDateTime: formateDateTime,
     }
     res.render( 'sequencing_form', renderParameters );
 };
